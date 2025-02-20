@@ -14,11 +14,12 @@ async function bootstrap() {
     }),
   );
 
+  app.setGlobalPrefix('api')
+
   const config = new DocumentBuilder()
     .setTitle('Social network')
     .setDescription('api documentation for social network application')
     .setVersion('1.0')
-    .addTag('social network')
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
