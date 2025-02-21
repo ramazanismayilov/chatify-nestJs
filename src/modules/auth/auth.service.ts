@@ -1,19 +1,57 @@
-import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
 import { DataSource, FindOptionsWhere, In, Repository } from "typeorm";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtService } from "@nestjs/jwt";
+import { LoginDto } from "./dto/login.dto.";
+import { compare } from "bcrypt";
+import { ClsService } from "nestjs-cls";
+import { LoginAttempts } from "src/database/entities/LoginAttempts.entity";
+import config from "src/shared/config";
 
 @Injectable()
 export class AuthService {
     private userRepo: Repository<UserEntity>
+    private loginAttemptsRepo: Repository<LoginAttempts>
 
     constructor(
-        @InjectDataSource() private dataSource: DataSource,
+        private cls: ClsService,
         private jwt: JwtService,
+        @InjectDataSource() private dataSource: DataSource,
     ) {
         this.userRepo = this.dataSource.getRepository(UserEntity)
+        this.loginAttemptsRepo = this.dataSource.getRepository(LoginAttempts);
+    }
+
+    async login(params: LoginDto) {
+        let identifier = params.username.toLowerCase();
+        let where: FindOptionsWhere<UserEntity>[] = [
+            {
+                username: identifier,
+            },
+            {
+                email: identifier,
+            },
+            {
+                password: identifier,
+            },
+        ];
+
+        let user = await this.userRepo.findOne({ where });
+        if (!user) throw new UnauthorizedException('Username or password is wrong');
+
+        await this.checkLoginAttempts(user);
+
+        let checkPassword = await compare(params.password, user.password);
+        if (!checkPassword) {
+            await this.addLoginAttempt(user);
+            throw new UnauthorizedException('Username or password is wrong');
+        }
+
+        await this.clearLoginAttempts(user);
+
+        return { messsage: "Signin is successfully", user, token: this.generateToken(user.id) };
     }
 
     async register(params: RegisterDto) {
@@ -75,5 +113,40 @@ export class AuthService {
 
     generateToken(userId: number) {
         return this.jwt.sign({ userId });
+    }
+
+    async checkLoginAttempts(user: UserEntity) {
+        let ip = this.cls.get('ip');
+        let attempts = await this.loginAttemptsRepo.count({
+            where: {
+                userId: user.id,
+                ip,
+            },
+        });
+
+        if (attempts >= config.loginAttempts) {
+            throw new HttpException(
+                'Please try again later',
+                HttpStatus.TOO_MANY_REQUESTS,
+            );
+        }
+    }
+
+    async addLoginAttempt(user: UserEntity) {
+        let ip = this.cls.get('ip');
+
+        let attempt = this.loginAttemptsRepo.create({
+            ip,
+            userId: user.id,
+            createdAt: new Date(),
+        });
+
+        await attempt.save();
+        return true;
+    }
+
+    async clearLoginAttempts(user: UserEntity) {
+        let ip = this.cls.get('ip');
+        await this.loginAttemptsRepo.delete({ ip, userId: user.id });
     }
 }
