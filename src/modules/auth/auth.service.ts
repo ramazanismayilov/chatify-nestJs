@@ -18,6 +18,7 @@ export class AuthService {
 
     async register(params: RegisterDto) {
         if (!params.phone && !params.email) throw new BadRequestException('Email or phone number needs to be filled');
+
         let username = params.username.toLowerCase();
         let email = params.email?.toLocaleLowerCase();
         let phone = params.phone;
@@ -53,7 +54,7 @@ export class AuthService {
         await user.save();
 
         let token = this.generateToken(user.id);
-        return { user, token };
+        return { message: "Signup is successfully", user, token };
     }
 
     async usernameSuggestions(username: string) {

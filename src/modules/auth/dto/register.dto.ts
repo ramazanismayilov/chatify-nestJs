@@ -1,34 +1,33 @@
 import { Type } from "class-transformer";
-import { IsAlphanumeric, IsEmail, IsOptional, IsString, Length, Matches, MinLength } from "class-validator";
+import { IsAlphanumeric, IsEmail, IsOptional, IsString, Length, MinLength } from "class-validator";
 
 export class RegisterDto {
     @Type()
+    @IsOptional()
     @IsString()
     @IsEmail()
-    @IsOptional()
-    email?: string = "test@example.com"
+    email?: string
 
     @Type()
-    @IsString()
     @IsOptional()
+    @IsString()
     @Length(6, 15)
-    @Matches(/^\+[\d]+$/, { message: 'phone number is not valid' })
-    phone?: string = '+99412345678';
+    phone?: string
 
     @Type()
     @IsString()
     @MinLength(6)
-    password: string = '123456';
+    password: string;
 
     @Type()
     @IsString()
-    @Length(4, 20)
+    @Length(4, 25)
     @IsAlphanumeric()
     username: string;
 
     @Type()
-    @IsString()
     @IsOptional()
+    @IsString()
     @Length(5, 50)
     fullName?: string;
 }
