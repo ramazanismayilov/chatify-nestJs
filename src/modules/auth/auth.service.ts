@@ -4,7 +4,7 @@ import { UserEntity } from "src/database/entities/User.entity";
 import { DataSource, FindOptionsWhere, In, Repository } from "typeorm";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtService } from "@nestjs/jwt";
-import { LoginDto } from "./dto/login.dto.";
+import { LoginDto } from "./dto/login.dto";
 import { compare } from "bcrypt";
 import { ClsService } from "nestjs-cls";
 import { LoginAttempts } from "src/database/entities/LoginAttempts.entity";

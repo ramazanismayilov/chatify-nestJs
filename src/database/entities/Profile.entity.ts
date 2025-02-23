@@ -23,7 +23,7 @@ export class ProfileEntity extends BaseEntity {
     postCount: number;
 
     @Column({ nullable: true })
-    imageId: number;
+    imageId: string;
 
     @Column()
     userId: number;
