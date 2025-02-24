@@ -10,6 +10,7 @@ import { ClsService } from "nestjs-cls";
 import { LoginAttempts } from "src/database/entities/LoginAttempts.entity";
 import config from "src/shared/config";
 import { MailerService } from "@nestjs-modules/mailer";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
 export class AuthService {
@@ -160,5 +161,23 @@ export class AuthService {
     async clearLoginAttempts(user: UserEntity) {
         let ip = this.cls.get('ip');
         await this.loginAttemptsRepo.delete({ ip, userId: user.id });
+    }
+
+    async resetPassword(params: ResetPasswordDto) {
+        let user = this.cls.get<UserEntity>('user')
+
+        if (params.newPassword !== params.repeatPassword) {
+            throw new BadRequestException('Repeat password is wrong');
+        }
+
+        let checkPassword = await compare(params.currentPassword, user.password);
+        if (!checkPassword) throw new BadRequestException('Password is wrong');
+
+        user.password = params.newPassword;
+        await user.save();
+
+        return {
+            message: 'Password is updated successfully',
+        };
     }
 }

@@ -3,6 +3,8 @@ import { RegisterDto } from "./dto/register.dto";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { LoginDto } from "./dto/login.dto";
+import { Auth } from "src/shared/decorators/auth.decorator";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -18,5 +20,11 @@ export class AuthController {
     @Post('register')
     register(@Body() body: RegisterDto) {
         return this.authService.register(body)
+    }
+
+    @Post('reset-password')
+    @Auth()
+    resetPassword(@Body() body: ResetPasswordDto) {
+        return this.authService.resetPassword(body);
     }
 }
