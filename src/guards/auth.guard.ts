@@ -9,6 +9,9 @@ export class AuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         let req = context.switchToHttp().getRequest()
         let token = req.cookies.authorization
+        if (!token) {
+            throw new UnauthorizedException("JWT token is missing");
+        }
 
         try {
             let payload = this.jwt.verify(token);

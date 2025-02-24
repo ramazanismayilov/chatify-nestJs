@@ -12,10 +12,11 @@ import { ClsModule } from 'nestjs-cls';
 import { Request } from 'express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobModule } from './jobs/job.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({isGlobal: true}),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -56,6 +57,7 @@ import { JobModule } from './jobs/job.module';
     }),
     UserModule,
     AuthModule,
+    UploadModule,
     JobModule
   ],
   controllers: [AppController],
