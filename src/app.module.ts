@@ -13,10 +13,12 @@ import { Request } from 'express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobModule } from './jobs/job.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({isGlobal: true}),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -53,6 +55,34 @@ import { UploadModule } from './modules/upload/upload.module';
         setup: (cls, req: Request) => {
           cls.set('ip', req.ip);
         },
+      },
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory(config: ConfigService) {
+        return {
+          transport: {
+            service: 'gmail',
+            host: config.get('SMTP_HOST'),
+            port: config.get('SMTP_PORT'),
+            secure: config.get('SMTP_SECURE'),
+            auth: {
+              user: config.get('SMTP_USER'),
+              pass: config.get('SMTP_PASSWORD'),
+            },
+          },
+          defaults: {
+            from: `"divchat" <${config.get('SMTP_FROM')}>`,
+          },
+          template: {
+            dir: __dirname + '/templates',
+            adapter: new HandlebarsAdapter(),
+            options: {
+              strict: true,
+            },
+          },
+        };
       },
     }),
     UserModule,

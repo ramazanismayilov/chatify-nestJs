@@ -9,6 +9,7 @@ import { compare } from "bcrypt";
 import { ClsService } from "nestjs-cls";
 import { LoginAttempts } from "src/database/entities/LoginAttempts.entity";
 import config from "src/shared/config";
+import { MailerService } from "@nestjs-modules/mailer";
 
 @Injectable()
 export class AuthService {
@@ -18,6 +19,7 @@ export class AuthService {
     constructor(
         private cls: ClsService,
         private jwt: JwtService,
+        private mailer: MailerService,
         @InjectDataSource() private dataSource: DataSource,
     ) {
         this.userRepo = this.dataSource.getRepository(UserEntity)
@@ -92,6 +94,16 @@ export class AuthService {
         await user.save();
 
         let token = this.generateToken(user.id);
+        if (email) {
+            let mailResult = await this.mailer.sendMail({
+                to: email,
+                subject: 'Welcome to Sosial Network',
+                template: 'welcome',
+                context: {
+                    username: user.username,
+                },
+            });
+        }
         return { message: "Signup is successfully", user, token };
     }
 
