@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+</head>
+
+<body>
+  <button id="googleLogin" type="button">Sign in with Google</button>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js';
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+    } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD1S42DN5avuAYIVsI0NHx1Fw3PFeBKxfM",
+      authDomain: "sosial-network-d6ab7.firebaseapp.com",
+      projectId: "sosial-network-d6ab7",
+      storageBucket: "sosial-network-d6ab7.firebasestorage.app",
+      messagingSenderId: "1014108257390",
+      appId: "1:1014108257390:web:8943f8b67d62edc186ba7f"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    const googleProvider = new GoogleAuthProvider();
+    const auth = getAuth(app);
+
+    document
+      .getElementById('googleLogin')
+      .addEventListener('click', async () => {
+        let firebaseResult = await signInWithPopup(
+          auth,
+          googleProvider,
+        ).catch((err) => {
+          console.log('ERROR', err);
+          return false;
+        });
+
+        if (!firebaseResult) alert('Something went wrong');
+
+        let token = firebaseResult.user.accessToken;
+        let result = await fetch('http://localhost:3000/api/auth/firebase', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            token,
+          }),
+        });
+        let response = await result.json();
+        console.log(response);
+      });
+  </script>
+</body>
+
+</html>
