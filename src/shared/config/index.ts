@@ -1,3 +1,4 @@
 export default {
-    loginAttempts: 5
+    loginAttempts: 5,
+    activationAttempts: 3,
 };

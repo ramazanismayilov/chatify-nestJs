@@ -11,6 +11,7 @@ import { LoginAttempts } from "src/database/entities/LoginAttempts.entity";
 import config from "src/shared/config";
 import { MailerService } from "@nestjs-modules/mailer";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { AuthUtils } from "./auth.utils";
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
         private cls: ClsService,
         private jwt: JwtService,
         private mailer: MailerService,
+        private authUtils: AuthUtils,
         @InjectDataSource() private dataSource: DataSource,
     ) {
         this.userRepo = this.dataSource.getRepository(UserEntity)
@@ -54,7 +56,7 @@ export class AuthService {
 
         await this.clearLoginAttempts(user);
 
-        return { messsage: "Signin is successfully", user, token: this.generateToken(user.id) };
+        return { messsage: "Signin is successfully", user, token: this.authUtils.generateToken(user.id) };
     }
 
     async register(params: RegisterDto) {
@@ -94,7 +96,7 @@ export class AuthService {
         });
         await user.save();
 
-        let token = this.generateToken(user.id);
+        let token = this.authUtils.generateToken(user.id);
         if (email) {
             let mailResult = await this.mailer.sendMail({
                 to: email,
@@ -122,10 +124,6 @@ export class AuthService {
         let existUsernames = dbUsernames.map((user) => user.username);
         usernames = usernames.filter(username => !existUsernames.includes(username));
         return usernames.slice(0, 2);
-    }
-
-    generateToken(userId: number) {
-        return this.jwt.sign({ userId });
     }
 
     async checkLoginAttempts(user: UserEntity) {

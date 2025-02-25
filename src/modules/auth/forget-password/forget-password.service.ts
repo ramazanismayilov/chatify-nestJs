@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { UserEntity } from "src/database/entities/User.entity";
-import { DataSource, Repository } from "typeorm";
-import { CreateForgetPasswordDto } from "./dto/create-forget-password.dto,";
+import { DataSource, MoreThan, Repository } from "typeorm";
+import { CreateForgetPasswordDto } from "./dto/create-forget-password.dto";
 import { UserActivationEntity } from "src/database/entities/UserActivation.entity";
+import { addMinutes } from "date-fns";
+import { v4 } from 'uuid';
+import index from '../../../shared/config/index';
+import { MailerService } from "@nestjs-modules/mailer";
+import { ConfirmForgetPaswordDto } from "./dto/confirm-forget-password.dto";
+import { JwtService } from "@nestjs/jwt";
+import { AuthUtils } from "../auth.utils";
 
 @Injectable()
 export class ForgetPasswordService {
@@ -11,6 +18,9 @@ export class ForgetPasswordService {
     private activationRepo: Repository<UserActivationEntity>
 
     constructor(
+        private jwt: JwtService,
+        private authUtils: AuthUtils,
+        private mailService: MailerService,
         @InjectDataSource() private dataSource: DataSource
     ) {
         this.userRepo = this.dataSource.getRepository(UserEntity)
@@ -18,7 +28,91 @@ export class ForgetPasswordService {
     }
 
     async createForgetPasswordRequest(params: CreateForgetPasswordDto) {
-        let user = this.userRepo.findOne({ where: params })
+        let user = await this.userRepo.findOne({
+            where: {
+                email: params.email,
+            },
+        });
         if (!user) throw new NotFoundException('User is not found');
+
+        let activation = await this.activationRepo.findOne({
+            where: {
+                userId: user.id,
+                expiredAt: MoreThan(new Date()),
+            },
+        });
+
+        if (!activation) {
+            activation = this.activationRepo.create({
+                userId: user.id,
+                token: v4(),
+                expiredAt: addMinutes(new Date(), 30),
+            });
+
+            await activation.save();
+        }
+
+
+        if (activation.attempts > index.activationAttempts) {
+            throw new HttpException(
+                'Too many requests',
+                HttpStatus.TOO_MANY_REQUESTS,
+            );
+        }
+
+        const resetLink = `${params.callbackURL}?token=${activation.token}`;
+        try {
+            await this.mailService.sendMail({
+                to: user.email,
+                subject: `Forget Password Request`,
+                template: 'forget-password',
+                context: {
+                    username: user.username,
+                    resetLink,
+                },
+            })
+
+            activation.attempts += 1
+            await activation.save()
+            return {
+                message: 'Mail has been successfully sent',
+            };
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Due some reasons, we cannot send mail for forget-password',
+            );
+        }
+    }
+
+    async confirmForgetPassword(params: ConfirmForgetPaswordDto) {
+        let activation = await this.activationRepo.findOne({
+            where: {
+                token: params.token,
+                expiredAt: MoreThan(new Date()),
+            },
+        });
+        if (!activation) throw new BadRequestException('Token is not valid');
+
+        if (activation.attempts > index.activationAttempts) throw new BadRequestException('Please try again later');
+
+        if (params.newPassword !== params.repeatPassword) {
+            throw new BadRequestException('Repeat password is not match with new password');
+        }
+
+        let user = await this.userRepo.findOne({
+            where: { id: activation.userId },
+        });
+        if (!user) throw new NotFoundException('User not found');
+
+        user.password = params.newPassword;
+        await user.save();
+
+        await this.activationRepo.delete({ userId: user.id });
+        let token = this.jwt.sign({ userId: user.id });
+
+        return {
+            message: 'Password is successfully updated',
+            token,
+        };
     }
 }
