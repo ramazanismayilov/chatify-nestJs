@@ -15,6 +15,7 @@ import { JobModule } from './jobs/job.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { FollowModule } from './modules/user/follow/follow.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     }),
     UserModule,
     AuthModule,
+    FollowModule,
     UploadModule,
     JobModule
   ],

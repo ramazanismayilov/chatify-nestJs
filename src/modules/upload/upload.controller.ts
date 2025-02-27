@@ -13,7 +13,7 @@ import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { UploadImageDto } from './dto/upload.dto';
 import { UploadService } from './upload.service';
 
-@Controller('upload')
+@Controller('uploads')
 @Auth()
 export class UploadController {
   constructor(private uploadService: UploadService) { }

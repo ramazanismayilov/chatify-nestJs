@@ -21,12 +21,14 @@ async function bootstrap() {
   app.use(cookieParser());
 
   const config = new DocumentBuilder()
-    .setTitle('Social network')
-    .setDescription('api documentation for social network application')
+    .setTitle('Chatify')
+    .setDescription('Api documentation for Chatify application')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
+
   const documentFactory = () => SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('docs', app, documentFactory, {
     customCssUrl: `/swagger.dark.css`,
     swaggerOptions: {
