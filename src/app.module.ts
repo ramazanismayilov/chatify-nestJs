@@ -73,7 +73,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
             },
           },
           defaults: {
-            from: `"divchat" <${config.get('SMTP_FROM')}>`,
+            from: `"chatify" <${config.get('SMTP_FROM')}>`,
           },
           template: {
             dir: __dirname + '/templates',

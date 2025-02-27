@@ -63,7 +63,7 @@ export class AuthService {
 
         await this.clearLoginAttempts(user);
 
-        return { messsage: "Signin is successfully", user, token: this.authUtils.generateToken(user.id) };
+        return { message: "Signin is successfully", user, token: this.authUtils.generateToken(user.id) };
     }
 
     async loginWithFirebase(params: LoginWithFirebaseDto) {
@@ -94,33 +94,39 @@ export class AuthService {
 
         if (!user) {
             let suggestions = await this.usernameSuggestions(firebaseResult.name);
+            let image = firebaseResult.picture ? await this.imageRepo.save({ url: firebaseResult.picture }) : undefined
 
-            let image = firebaseResult.picture
-                ? await this.imageRepo.save({
-                    url: firebaseResult.picture,
-                })
-                : undefined
-
-            // user = this.userRepo.create({
-            //     username: suggestions[0],
-            //     email,
-            //     password: v4(),
-            //     provider: UserProvider.FIREBASE,
-            //     providerId: uid,
-            //     profile: {
-            //         fullName: firebaseResult.name,
-            //         imageId: image?.id,
-            //     },
-            // });
-            // await user.save();
+            user = this.userRepo.create({
+                username: suggestions[0],
+                email,
+                password: v4(),
+                provider: UserProvider.FIREBASE,
+                providerId: uid,
+                profile: {
+                    fullName: firebaseResult.name,
+                    imageId: image?.id?.toString(),
+                },
+            });
+            await user.save();
         }
 
-        // let token = this.authUtils.generateToken(user.id);
+        let token = this.authUtils.generateToken(user.id);
+        if (email) {
+            await this.mailer.sendMail({
+                to: email,
+                subject: 'Welcome to Chatify!',
+                template: 'welcome',
+                context: {
+                    username: user.username,
+                },
+            });
+        }
 
-        // return {
-        //     user,
-        //     token,
-        // };
+        return {
+            message: "Signup is successfully",
+            user,
+            token,
+        };
     }
 
     async register(params: RegisterDto) {
@@ -162,9 +168,9 @@ export class AuthService {
 
         let token = this.authUtils.generateToken(user.id);
         if (email) {
-            let mailResult = await this.mailer.sendMail({
+            await this.mailer.sendMail({
                 to: email,
-                subject: 'Welcome to Sosial Network',
+                subject: 'Welcome to Chatify!',
                 template: 'welcome',
                 context: {
                     username: user.username,
@@ -175,6 +181,12 @@ export class AuthService {
     }
 
     async usernameSuggestions(username: string) {
+        username = username
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^\w-]+/g, '')
+            .replace(/^-+|-+$/g, '');
+
         let usernames = Array.from({ length: 8 }).map(() => `${username}${Math.floor(Math.random() * 8999) + 1000}`);
         let dbUsernames = await this.userRepo.find({
             where: {
