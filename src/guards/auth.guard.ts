@@ -8,10 +8,10 @@ export class AuthGuard implements CanActivate {
     constructor(private userService: UserService, private jwt: JwtService, private cls: ClsService) { }
     async canActivate(context: ExecutionContext): Promise<boolean> {
         let req = context.switchToHttp().getRequest()
-        let token = req.cookies.authorization
-        if (!token) {
-            throw new UnauthorizedException("JWT token is missing");
-        }
+        
+        let token = req.headers.authorization || ''
+        token = token.split(' ')[1];
+        if (!token) throw new UnauthorizedException('unauthorized');
 
         try {
             let payload = this.jwt.verify(token);

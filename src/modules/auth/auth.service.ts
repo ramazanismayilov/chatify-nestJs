@@ -43,9 +43,6 @@ export class AuthService {
                 username: identifier,
             },
             {
-                email: identifier,
-            },
-            {
                 password: identifier,
             },
         ];

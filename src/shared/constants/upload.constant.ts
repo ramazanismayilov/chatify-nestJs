@@ -1,4 +1,4 @@
-export const UPLOAD_IMAGE_MAX_SIZE = 2.5e7;
+export const UPLOAD_IMAGE_MAX_SIZE = 5e7;
 export const UPLOAD_IMAGE_ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
