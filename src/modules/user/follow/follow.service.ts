@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { UserService } from "../user.service";
@@ -15,11 +15,21 @@ export class FollowService {
     private profileRepo: Repository<ProfileEntity>
     constructor(
         private cls: ClsService,
+        @Inject(forwardRef(() => UserService))
         private userService: UserService,
         @InjectDataSource() private dataSource: DataSource
     ) {
         this.followRepo = this.dataSource.getRepository(FollowEntity)
         this.profileRepo = this.dataSource.getRepository(ProfileEntity)
+    }
+
+    async userAccessible(from: number, to: number) {
+        if (from === to) return true;
+        let user = await this.userService.getUser(to);
+        if (!user?.isPrivate) return true;
+        return this.followRepo.exists({
+            where: { fromId: from, toId: to, status: FollowStatus.ACCEPTED },
+        });
     }
 
     async getUserFollowers(id: number) {
@@ -117,10 +127,10 @@ export class FollowService {
         });
     }
 
-    async pendingRequests() {
+    async pendingRequests(userId?: number) {
         let user = this.cls.get<UserEntity>('user');
         return this.followRepo.find({
-            where: { toId: user.id, status: FollowStatus.PENDING },
+            where: { toId: userId || user.id, status: FollowStatus.PENDING },
             select: {
                 id: true,
                 from: {
@@ -239,5 +249,17 @@ export class FollowService {
         promises.push(this.profileRepo.increment({ userId: from }, 'following', increment));
         promises.push(this.profileRepo.increment({ userId: to }, 'follower', increment));
         return Promise.all(promises);
+    }
+
+    async acceptPendingRequests() {
+        let pendingRequests = await this.pendingRequests();
+
+        let promises = pendingRequests.map((followRequest) =>
+            this.updateFollowStatus({
+                from: followRequest.fromId,
+                status: UpdateFollowStatusEnum.ACCEPT,
+            }),
+        );
+        return await Promise.all(promises);
     }
 }
