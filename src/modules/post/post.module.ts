@@ -6,6 +6,7 @@ import { FollowModule } from "../user/follow/follow.module";
 @Module({
     imports: [FollowModule],
     controllers: [PostController],
-    providers: [PostService]
+    providers: [PostService],
+    exports: [PostService]
 })
 export class PostModule { }

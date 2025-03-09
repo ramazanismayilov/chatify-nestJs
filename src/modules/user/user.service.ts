@@ -62,4 +62,12 @@ export class UserService {
       message: 'Profile is updated successfully',
     };
   }
+
+  async incrementCount(
+    userId: number,
+    column: 'follower' | 'following' | 'postCount',
+    value: number = 0,
+  ) {
+    return this.profileRepo.increment({ userId }, column, value);
+  }
 }

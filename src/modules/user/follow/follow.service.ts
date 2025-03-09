@@ -246,8 +246,8 @@ export class FollowService {
 
     private updateFollowCounts(from: number, to: number, increment: number) {
         let promises: any = [];
-        promises.push(this.profileRepo.increment({ userId: from }, 'following', increment));
-        promises.push(this.profileRepo.increment({ userId: to }, 'follower', increment));
+        promises.push(this.userService.incrementCount(from, 'following', increment));
+        promises.push(this.userService.incrementCount(to, 'follower', increment));
         return Promise.all(promises);
     }
 

@@ -24,6 +24,10 @@ export class PostService {
         this.mediaRepo = this.dataSource.getRepository(MediaEntity)
     }
 
+    async findOne(id: number, relations: string[] = []) {
+        return this.postRepo.findOne({ where: { id }, relations });
+    }
+
     async create(params: CreatePostDto) {
         let user = this.cls.get<UserEntity>('user')
         const media = await this.mediaRepo.findBy({
@@ -37,6 +41,7 @@ export class PostService {
         })
 
         await post.save();
+        await this.userService.incrementCount(user.id, 'postCount', 1)
         return post
     }
 
