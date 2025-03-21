@@ -75,4 +75,7 @@ export class PostService {
         };
     }
 
+    async increment(postId: number, column: 'view' | 'like' | 'commentCount', value: number = 0) {
+        return this.postRepo.increment({ id: postId }, column, value);
+    }
 }

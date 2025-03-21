@@ -1,5 +1,8 @@
 import {
   Controller,
+  Delete,
+  Get,
+  Param,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -18,6 +21,11 @@ import { UploadService } from './upload.service';
 export class UploadController {
   constructor(private uploadService: UploadService) { }
 
+  @Get('images')
+  allImages() {
+    return this.uploadService.list()
+  }
+
   @Post('image')
   @UseInterceptors(
     FileInterceptor('image', {
@@ -31,6 +39,11 @@ export class UploadController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadImageDto })
   uploadImage(@UploadedFile() file: Express.Multer.File) {
-    return this.uploadService.uploadImage(file);
+    return this.uploadService.create(file);
+  }
+
+  @Delete('images/:id')
+  deleteImage(@Param('id') id: string) {
+    return this.uploadService.delete(id);
   }
 }

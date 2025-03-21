@@ -18,6 +18,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { FollowModule } from './modules/user/follow/follow.module';
 import { PostModule } from './modules/post/post.module';
 import { MediaModule } from './modules/media/media.module';
+import { CommentModule } from './modules/post/comment/comment.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { MediaModule } from './modules/media/media.module';
     UploadModule,
     PostModule,
     MediaModule,
+    CommentModule,
     JobModule
   ],
   controllers: [AppController],

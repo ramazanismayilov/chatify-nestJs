@@ -7,12 +7,10 @@ import { ClsService } from "nestjs-cls";
 import { FollowEntity } from "src/database/entities/Follow.entity";
 import { UserEntity } from "src/database/entities/User.entity";
 import { FollowStatus, UpdateFollowStatusEnum } from "src/shared/enums/follow.enum";
-import { ProfileEntity } from "src/database/entities/Profile.entity";
 
 @Injectable()
 export class FollowService {
     private followRepo: Repository<FollowEntity>
-    private profileRepo: Repository<ProfileEntity>
     constructor(
         private cls: ClsService,
         @Inject(forwardRef(() => UserService))
@@ -20,7 +18,6 @@ export class FollowService {
         @InjectDataSource() private dataSource: DataSource
     ) {
         this.followRepo = this.dataSource.getRepository(FollowEntity)
-        this.profileRepo = this.dataSource.getRepository(ProfileEntity)
     }
 
     async userAccessible(from: number, to: number) {

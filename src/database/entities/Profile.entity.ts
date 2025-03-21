@@ -28,7 +28,7 @@ export class ProfileEntity extends BaseEntity {
     @Column()
     userId: number;
 
-    @OneToOne(() => ImageEntity)
+    @OneToOne(() => ImageEntity, { onDelete: 'SET NULL' })
     @JoinColumn({
         name: 'imageId',
         referencedColumnName: 'id',
